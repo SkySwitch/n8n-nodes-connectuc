@@ -1,11 +1,11 @@
 {
   "name": "n8n-nodes-connectuc",
   "version": "0.1.0",
-  "description": "",
+  "description": "n8n nodes for ConnectUC: call, SMS, CDR and voicemail triggers plus contact, DND, SMS and call actions",
   "license": "MIT",
   "homepage": "",
-  "keywords": ["n8n-community-node-package"],
-  "author": { "name": "Metalcoder", "email": "yunior.rdguez@gmail.com" },
+  "keywords": ["n8n-community-node-package", "n8n", "connectuc", "skyswitch"],
+  "author": { "name": "SkySwitch", "email": "yrodriguez@skyswitch.com" },
   "repository": {
     "type": "git",
     "url": "https://github.com/<...>/n8n-nodes-<...>.git"
@@ -23,8 +23,8 @@
   "n8n": {
     "n8nNodesApiVersion": 1,
     "strict": true,
-    "credentials": ["dist/credentials/ConnectucOAuth2Api.credentials.js"],
-    "nodes": ["dist/nodes/Connectuc/Connectuc.node.js"]
+    "credentials": ["dist/credentials/ConnectUcOAuth2Api.credentials.js"],
+    "nodes": ["dist/nodes/ConnectUc/ConnectUc.node.js"]
   },
   "devDependencies": {
     "@n8n/node-cli": "*",
