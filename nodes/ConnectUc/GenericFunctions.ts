@@ -1,5 +1,6 @@
 import {
 	NodeApiError,
+	NodeOperationError,
 	type IDataObject,
 	type IExecuteFunctions,
 	type IHookFunctions,
@@ -59,6 +60,37 @@ export async function connectucApiRequest<T = unknown>(
 			typeof apiMessage === 'string' ? { description: apiMessage } : undefined,
 		);
 	}
+}
+
+// Routes like /users/{uuid}/cdrs/... need the caller's own UUID (not "me"). It's the
+// access token's `sub`; reading it locally avoids /oauth2/userinfo, which needs an
+// `openid`-scoped token. The API still validates the token itself.
+export async function getAuthenticatedUserUuid(this: IExecuteFunctions): Promise<string> {
+	const credentials = await this.getCredentials(CREDENTIAL_NAME);
+	const accessToken = (credentials.oauthTokenData as IDataObject | undefined)?.access_token;
+
+	if (typeof accessToken !== 'string' || accessToken === '') {
+		throw new NodeOperationError(this.getNode(), 'The ConnectUC credential is not connected');
+	}
+
+	let sub: unknown;
+
+	try {
+		const payload = accessToken.split('.')[1] ?? '';
+		sub = (JSON.parse(Buffer.from(payload, 'base64url').toString('utf8')) as IDataObject).sub;
+	} catch {
+		sub = undefined;
+	}
+
+	if (typeof sub !== 'string' || sub === '') {
+		throw new NodeOperationError(
+			this.getNode(),
+			'Could not read the ConnectUC user from the access token',
+			{ description: 'Reconnect the ConnectUC credential and try again' },
+		);
+	}
+
+	return sub;
 }
 
 interface Domain {
