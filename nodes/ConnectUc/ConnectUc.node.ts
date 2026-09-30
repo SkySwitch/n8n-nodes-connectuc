@@ -1,11 +1,15 @@
 import {
+	NodeApiError,
 	NodeConnectionTypes,
+	NodeOperationError,
+	type IDataObject,
 	type IExecuteFunctions,
 	type INodeExecutionData,
 	type INodeType,
 	type INodeTypeDescription,
 } from 'n8n-workflow';
-import { loadOptions } from './GenericFunctions';
+import { userFields, userOperations } from './descriptions/UserDescription';
+import { connectucApiRequest, loadOptions } from './GenericFunctions';
 
 // Programmatic rather than declarative: Find/Update CDR need a /oauth2/userinfo
 // lookup before the main request, and the helper + dropdowns are shared with
@@ -17,7 +21,7 @@ export class ConnectUc implements INodeType {
 		icon: { light: 'file:connectuc.svg', dark: 'file:connectuc.dark.svg' },
 		group: ['transform'],
 		version: 1,
-		subtitle: '={{$parameter["domain"]}}',
+		subtitle: '={{$parameter["operation"] + ": " + $parameter["resource"]}}',
 		description: 'Interact with the ConnectUC API',
 		defaults: {
 			name: 'ConnectUC',
@@ -26,67 +30,22 @@ export class ConnectUc implements INodeType {
 		inputs: [NodeConnectionTypes.Main],
 		outputs: [NodeConnectionTypes.Main],
 		credentials: [{ name: 'connectUcOAuth2Api', required: true }],
-		// Phase 4: dropdowns only, to verify the Domain → User → Device cascade.
-		// Phase 5 replaces these with resource/operation-scoped fields.
 		properties: [
 			{
-				displayName: 'Domain Name or ID',
-				name: 'domain',
+				displayName: 'Resource',
+				name: 'resource',
 				type: 'options',
-				typeOptions: {
-					loadOptionsMethod: 'getDomains',
-				},
-				default: '',
-				description:
-					'Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>',
+				noDataExpression: true,
+				options: [
+					{
+						name: 'User',
+						value: 'user',
+					},
+				],
+				default: 'user',
 			},
-			{
-				displayName: 'User Name or ID',
-				name: 'user',
-				type: 'options',
-				typeOptions: {
-					loadOptionsMethod: 'getSubscribers',
-					loadOptionsDependsOn: ['domain'],
-				},
-				default: '',
-				description:
-					'Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>',
-			},
-			{
-				displayName: 'Device Name or ID',
-				name: 'device',
-				type: 'options',
-				typeOptions: {
-					loadOptionsMethod: 'getDevices',
-					loadOptionsDependsOn: ['user'],
-				},
-				default: '',
-				description:
-					'Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>',
-			},
-			{
-				displayName: 'Users Names or IDs',
-				name: 'users',
-				type: 'multiOptions',
-				typeOptions: {
-					loadOptionsMethod: 'getUsers',
-					loadOptionsDependsOn: ['domain'],
-				},
-				default: [],
-				description:
-					'Choose from the list, or specify IDs using an <a href="https://docs.n8n.io/code/expressions/">expression</a>',
-			},
-			{
-				displayName: 'SMS Sender Name or ID',
-				name: 'smsSender',
-				type: 'options',
-				typeOptions: {
-					loadOptionsMethod: 'getSmsNumbers',
-				},
-				default: '',
-				description:
-					'Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>',
-			},
+			...userOperations,
+			...userFields,
 		],
 	};
 
@@ -97,16 +56,47 @@ export class ConnectUc implements INodeType {
 		const returnData: INodeExecutionData[] = [];
 
 		for (let i = 0; i < items.length; i++) {
-			returnData.push({
-				json: {
-					domain: this.getNodeParameter('domain', i, '') as string,
-					user: this.getNodeParameter('user', i, '') as string,
-					device: this.getNodeParameter('device', i, '') as string,
-					users: this.getNodeParameter('users', i, []) as string[],
-					smsSender: this.getNodeParameter('smsSender', i, '') as string,
-				},
-				pairedItem: { item: i },
-			});
+			try {
+				const resource = this.getNodeParameter('resource', i) as string;
+				const operation = this.getNodeParameter('operation', i) as string;
+				let responseData: IDataObject;
+
+				if (resource === 'user' && operation === 'setDnd') {
+					const user = this.getNodeParameter('user', i) as string;
+					const dnd = this.getNodeParameter('dnd', i) as boolean;
+
+					const response = (await connectucApiRequest.call(
+						this,
+						'POST',
+						`/users/${encodeURIComponent(user)}/dnd/update`,
+						{ dnd },
+					)) as IDataObject;
+
+					responseData = { user, dnd, ...response };
+				} else {
+					throw new NodeOperationError(
+						this.getNode(),
+						`The operation "${operation}" is not supported for resource "${resource}"`,
+						{ itemIndex: i },
+					);
+				}
+
+				returnData.push({ json: responseData, pairedItem: { item: i } });
+			} catch (error) {
+				if (this.continueOnFail()) {
+					returnData.push({
+						json: { error: (error as Error).message },
+						pairedItem: { item: i },
+					});
+					continue;
+				}
+
+				// API failures arrive as NodeApiError (with the API's message) from
+				// connectucApiRequest; wrap anything else so it keeps the item context.
+				throw error instanceof NodeApiError || error instanceof NodeOperationError
+					? error
+					: new NodeOperationError(this.getNode(), error as Error, { itemIndex: i });
+			}
 		}
 
 		return [returnData];
