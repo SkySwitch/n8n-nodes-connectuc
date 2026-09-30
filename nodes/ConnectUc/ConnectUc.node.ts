@@ -9,6 +9,7 @@ import {
 	type INodeTypeDescription,
 } from 'n8n-workflow';
 import { randomUUID } from 'crypto';
+import { callFields, callOperations } from './descriptions/CallDescription';
 import { contactFields, contactOperations } from './descriptions/ContactDescription';
 import { smsFields, smsOperations } from './descriptions/SmsDescription';
 import { userFields, userOperations } from './descriptions/UserDescription';
@@ -109,7 +110,30 @@ async function sendSms(this: IExecuteFunctions, i: number): Promise<IDataObject>
 	return (await connectucApiRequest.call(this, 'POST', '/sms/messages', body)) as IDataObject;
 }
 
+async function initiateCall(this: IExecuteFunctions, i: number): Promise<IDataObject> {
+	const user = this.getNodeParameter('user', i) as string;
+	const additionalFields = this.getNodeParameter('additionalFields', i, {}) as {
+		callerId?: string;
+	};
+
+	// The backend authorizes on the device's own user@domain, not on the path user
+	const body: IDataObject = {
+		fromUid: this.getNodeParameter('device', i) as string,
+		toNumber: this.getNodeParameter('toNumber', i) as string,
+	};
+
+	if (additionalFields.callerId) body.callerId = additionalFields.callerId;
+
+	return (await connectucApiRequest.call(
+		this,
+		'POST',
+		`/users/${encodeURIComponent(user)}/activepieces/initiate-call`,
+		body,
+	)) as IDataObject;
+}
+
 const handlers: Record<string, OperationHandler> = {
+	'call.initiate': initiateCall,
 	'contact.create': createContact,
 	'sms.send': sendSms,
 	'user.setDnd': setDnd,
@@ -142,6 +166,10 @@ export class ConnectUc implements INodeType {
 				noDataExpression: true,
 				options: [
 					{
+						name: 'Call',
+						value: 'call',
+					},
+					{
 						name: 'Contact',
 						value: 'contact',
 					},
@@ -156,6 +184,8 @@ export class ConnectUc implements INodeType {
 				],
 				default: 'contact',
 			},
+			...callOperations,
+			...callFields,
 			...contactOperations,
 			...contactFields,
 			...smsOperations,
