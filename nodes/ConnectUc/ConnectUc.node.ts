@@ -8,7 +8,9 @@ import {
 	type INodeType,
 	type INodeTypeDescription,
 } from 'n8n-workflow';
+import { randomUUID } from 'crypto';
 import { contactFields, contactOperations } from './descriptions/ContactDescription';
+import { smsFields, smsOperations } from './descriptions/SmsDescription';
 import { userFields, userOperations } from './descriptions/UserDescription';
 import { connectucApiRequest, loadOptions } from './GenericFunctions';
 
@@ -68,8 +70,48 @@ async function createContact(this: IExecuteFunctions, i: number): Promise<IDataO
 	)) as IDataObject;
 }
 
+// message-hub accepts only 11-digit NANP numbers starting with 1 (no "+" or formatting)
+function normalizeRecipient(this: IExecuteFunctions, raw: string, i: number): string {
+	const digits = raw.replace(/\D/g, '');
+	const number = digits.length === 10 ? `1${digits}` : digits;
+
+	if (!/^1\d{10}$/.test(number)) {
+		throw new NodeOperationError(this.getNode(), `Invalid recipient "${raw.trim()}"`, {
+			itemIndex: i,
+			description: 'Use a 10-digit US number, or 11 digits starting with 1',
+		});
+	}
+
+	return number;
+}
+
+async function sendSms(this: IExecuteFunctions, i: number): Promise<IDataObject> {
+	const recipients = (this.getNodeParameter('recipients', i) as string)
+		.split(',')
+		.filter((recipient) => recipient.trim() !== '')
+		.map((recipient) => normalizeRecipient.call(this, recipient, i));
+	const media = this.getNodeParameter('media', i, {}) as {
+		item?: Array<{ url: string; type?: string }>;
+	};
+
+	const body: IDataObject = {
+		application: 'connectuc',
+		content: this.getNodeParameter('content', i) as string,
+		recipients,
+		// message-hub iterates media unconditionally, so always send an array
+		media: (media.item ?? []).map(({ url, type }) => (type ? { url, type } : { url })),
+		referenceId: randomUUID(),
+	};
+
+	const sender = this.getNodeParameter('sender', i, '') as string;
+	if (sender) body.sender = sender;
+
+	return (await connectucApiRequest.call(this, 'POST', '/sms/messages', body)) as IDataObject;
+}
+
 const handlers: Record<string, OperationHandler> = {
 	'contact.create': createContact,
+	'sms.send': sendSms,
 	'user.setDnd': setDnd,
 };
 
@@ -104,6 +146,10 @@ export class ConnectUc implements INodeType {
 						value: 'contact',
 					},
 					{
+						name: 'SMS',
+						value: 'sms',
+					},
+					{
 						name: 'User',
 						value: 'user',
 					},
@@ -112,6 +158,8 @@ export class ConnectUc implements INodeType {
 			},
 			...contactOperations,
 			...contactFields,
+			...smsOperations,
+			...smsFields,
 			...userOperations,
 			...userFields,
 		],
