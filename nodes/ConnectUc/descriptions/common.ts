@@ -1,7 +1,7 @@
 import type { IDisplayOptions, INodeProperties } from 'n8n-workflow';
 
 // Domain only drives the User dropdown; the API routes are keyed by user UUID.
-export function domainField(show: IDisplayOptions['show']): INodeProperties {
+export function domainField(show?: IDisplayOptions['show']): INodeProperties {
 	return {
 		displayName: 'Domain Name or ID',
 		name: 'domain',
@@ -11,7 +11,7 @@ export function domainField(show: IDisplayOptions['show']): INodeProperties {
 		},
 		required: true,
 		default: '',
-		displayOptions: { show },
+		...(show ? { displayOptions: { show } } : {}),
 		description:
 			'Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>',
 	};
