@@ -3,12 +3,12 @@
   "version": "0.1.0",
   "description": "n8n nodes for ConnectUC: call, SMS, CDR and voicemail triggers plus contact, DND, SMS and call actions",
   "license": "MIT",
-  "homepage": "",
+  "homepage": "https://github.com/SkySwitch/n8n-nodes-connectuc#readme",
   "keywords": ["n8n-community-node-package", "n8n", "connectuc", "skyswitch"],
   "author": { "name": "SkySwitch", "email": "yrodriguez@skyswitch.com" },
   "repository": {
     "type": "git",
-    "url": "https://github.com/<...>/n8n-nodes-<...>.git"
+    "url": "git+https://github.com/SkySwitch/n8n-nodes-connectuc.git"
   },
   "scripts": {
     "build": "n8n-node build",
@@ -19,7 +19,7 @@
     "release": "n8n-node release",
     "prepublishOnly": "n8n-node prerelease"
   },
-  "files": ["dist"],
+  "files": ["dist", "!dist/tsconfig.tsbuildinfo"],
   "n8n": {
     "n8nNodesApiVersion": 1,
     "strict": true,

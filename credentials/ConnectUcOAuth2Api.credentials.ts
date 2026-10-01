@@ -13,7 +13,7 @@ export class ConnectUcOAuth2Api implements ICredentialType {
 	};
 
 	// Link to your community node's README
-	documentationUrl = 'https://github.com/org/n8n-nodes-connectuc?tab=readme-ov-file#credentials';
+	documentationUrl = 'https://github.com/SkySwitch/n8n-nodes-connectuc?tab=readme-ov-file#credentials';
 
 	properties: INodeProperties[] = [
 		{
