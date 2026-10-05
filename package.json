@@ -1,6 +1,6 @@
 {
   "name": "n8n-nodes-connectuc",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "n8n nodes for ConnectUC: call, SMS, CDR and voicemail triggers plus contact, DND, SMS and call actions",
   "license": "MIT",
   "homepage": "https://github.com/SkySwitch/n8n-nodes-connectuc#readme",
