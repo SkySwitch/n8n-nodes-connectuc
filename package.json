@@ -4,8 +4,16 @@
   "description": "n8n nodes for ConnectUC: call, SMS, CDR and voicemail triggers plus contact, DND, SMS and call actions",
   "license": "MIT",
   "homepage": "https://github.com/SkySwitch/n8n-nodes-connectuc#readme",
-  "keywords": ["n8n-community-node-package", "n8n", "connectuc", "skyswitch"],
-  "author": { "name": "SkySwitch", "email": "yrodriguez@skyswitch.com" },
+  "keywords": [
+    "n8n-community-node-package",
+    "n8n",
+    "connectuc",
+    "skyswitch"
+  ],
+  "author": {
+    "name": "SkySwitch",
+    "email": "yrodriguez@skyswitch.com"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/SkySwitch/n8n-nodes-connectuc.git"
@@ -19,19 +27,29 @@
     "release": "n8n-node release",
     "prepublishOnly": "n8n-node prerelease"
   },
-  "files": ["dist", "!dist/tsconfig.tsbuildinfo"],
+  "files": [
+    "dist",
+    "!dist/tsconfig.tsbuildinfo"
+  ],
   "n8n": {
     "n8nNodesApiVersion": 1,
     "strict": true,
-    "credentials": ["dist/credentials/ConnectUcOAuth2Api.credentials.js"],
-    "nodes": ["dist/nodes/ConnectUc/ConnectUc.node.js", "dist/nodes/ConnectUc/ConnectUcTrigger.node.js"]
+    "credentials": [
+      "dist/credentials/ConnectUcOAuth2Api.credentials.js"
+    ],
+    "nodes": [
+      "dist/nodes/ConnectUc/ConnectUc.node.js",
+      "dist/nodes/ConnectUc/ConnectUcTrigger.node.js"
+    ]
   },
   "devDependencies": {
     "@n8n/node-cli": "*",
     "eslint": "9.32.0",
     "prettier": "3.6.2",
-    "release-it": "^21.1.0",
+    "release-it": "^19.2.4",
     "typescript": "5.9.2"
   },
-  "peerDependencies": { "n8n-workflow": "*" }
+  "peerDependencies": {
+    "n8n-workflow": "*"
+  }
 }
