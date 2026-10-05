@@ -1,0 +1,20 @@
+{
+	"node": "n8n-nodes-connectuc.connectUcTrigger",
+	"nodeVersion": "1.0",
+	"codexVersion": "1.0",
+	"categories": [
+		"Communication"
+	],
+	"resources": {
+		"credentialDocumentation": [
+			{
+				"url": "https://github.com/SkySwitch/n8n-nodes-connectuc?tab=readme-ov-file#credentials"
+			}
+		],
+		"primaryDocumentation": [
+			{
+				"url": "https://github.com/SkySwitch/n8n-nodes-connectuc?tab=readme-ov-file"
+			}
+		]
+	}
+}
