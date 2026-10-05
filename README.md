@@ -269,6 +269,8 @@ Shapes of what each event delivers. The values are illustrative.
 
 ## Version history
 
-### 0.1.0
+See [CHANGELOG.md](CHANGELOG.md) for every release.
 
-Initial release: the ConnectUC node (Call, CDR, Contact, SMS, User) and the ConnectUC Trigger node (8 events), with OAuth2 authentication.
+### Initial release
+
+The ConnectUC node (Call, CDR, Contact, SMS, User) and the ConnectUC Trigger node (8 events), with OAuth2 authentication.
