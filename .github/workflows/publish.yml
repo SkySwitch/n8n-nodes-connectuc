@@ -97,3 +97,7 @@ jobs:
           npm run release
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          # Prerelease tags (e.g. 0.1.3-beta.0) publish under the "beta" dist-tag so
+          # installs and n8n's Community Nodes UI keep resolving "latest" to stable.
+          # n8n-node release runs a plain `npm publish`, which reads this from the env.
+          NPM_CONFIG_TAG: ${{ contains(github.ref_name, '-') && 'beta' || 'latest' }}
