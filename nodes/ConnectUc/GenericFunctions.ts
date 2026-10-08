@@ -191,7 +191,11 @@ export const loadOptions = {
 	},
 
 	async getSmsNumbers(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
-		const response = (await connectucApiRequest.call(this, 'GET', '/sms/numbers')) as SmsNumbersResponse;
+		const response = (await connectucApiRequest.call(
+			this,
+			'GET',
+			'/sms/numbers',
+		)) as SmsNumbersResponse;
 
 		return (response.numbers ?? []).map(({ number }) => ({ name: number, value: number }));
 	},

@@ -24,6 +24,8 @@
     "dev": "n8n-node dev",
     "lint": "n8n-node lint",
     "lint:fix": "n8n-node lint --fix",
+    "format": "prettier --write nodes credentials",
+    "format:check": "prettier --check nodes credentials",
     "release": "n8n-node release",
     "prepublishOnly": "n8n-node prerelease"
   },
