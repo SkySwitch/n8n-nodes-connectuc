@@ -1,0 +1,69 @@
+# Automated PR code review with Claude Code.
+#
+# ─── ONE-TIME SETUP ────────────────────────────────────────────────────────────
+#
+#   1. Install the Claude GitHub App on this repo: https://github.com/apps/claude
+#   2. Generate a Claude Code OAuth token locally with `claude setup-token`.
+#   3. In GitHub: Settings → Secrets and variables → Actions → New secret.
+#      Name it CLAUDE_CODE_OAUTH_TOKEN and paste the token.
+#
+# Note: secrets are not exposed to pull requests opened from forks, so this
+# review only runs for PRs from branches in this repository.
+
+name: Claude PR Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, ready_for_review, reopened]
+
+concurrency:
+  group: claude-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  review:
+    name: Claude review
+    # Skip drafts and fork PRs (no access to secrets).
+    if: >-
+      github.event.pull_request.draft == false &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Run Claude review
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          prompt: |
+            REPO: ${{ github.repository }}
+            PR NUMBER: ${{ github.event.pull_request.number }}
+
+            Review this pull request for an n8n community node package
+            (ConnectUC). Read AGENTS.md and the relevant docs in .agents/
+            first; they define the project's conventions.
+
+            Focus on:
+            - Correctness bugs and unhandled error paths
+            - Security: credentials fields marked as `password`, no secrets
+              logged or hardcoded, safe handling of webhook payloads
+            - n8n conventions: node/credential descriptions, property
+              definitions, UX guidelines, `package.json` `n8n` entries kept in
+              sync with added/removed/renamed nodes and credentials
+            - CHANGELOG.md updated when the package version changes
+
+            Only report real, actionable problems; skip style nits that the
+            linter already covers. Use inline comments for issues tied to
+            specific lines, and post one short summary comment on the PR with
+            `gh pr comment`. If there are no issues, say so briefly.
+          claude_args: |
+            --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*)"
